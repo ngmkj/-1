@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👆 你真的很闲</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            background: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+        .number {
+            font-size: min(35vw, 180px);
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(255,255,255,0.15);
+            transition: transform 0.08s ease;
+            line-height: 1.2;
+        }
+        .number:active {
+            transform: scale(0.92);
+        }
+        .hint {
+            color: rgba(255,255,255,0.2);
+            font-size: 18px;
+            margin-top: 20px;
+            letter-spacing: 2px;
+        }
+        .taunt-area {
+            margin-top: 24px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .taunt-text {
+            color: rgba(255,255,255,0.5);
+            font-size: 20px;
+            font-style: italic;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            max-width: 80vw;
+            line-height: 1.5;
+        }
+        .taunt-text.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .taunt-text.zha-xin {
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255,107,107,0.3);
+        }
+        .reset-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.3);
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+        .reset-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+        }
+        .counter-label {
+            color: rgba(255,255,255,0.08);
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .taunt-count {
+            color: rgba(255,255,255,0.1);
+            font-size: 12px;
+            margin-top: 8px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="counter-label">你居然点了</div>
+        <div class="number" id="countDisplay">0</div>
+        <div class="hint">👆 次</div>
+        <div class="taunt-area">
+            <div class="taunt-text" id="tauntText"></div>
+        </div>
+        <div class="taunt-count" id="tauntCount"></div>
+    </div>
+    <button class="reset-btn" id="resetBtn">↺ 重新做人</button>
+
+    <script>
+        (function() {
+            let count = 0;
+            let lastTauntIndex = -1;
+            const display = document.getElementById('countDisplay');
+            const tauntEl = document.getElementById('tauntText');
+            const tauntCountEl = document.getElementById('tauntCount');
+            const resetBtn = document.getElementById('resetBtn');
+
+            const taunts = [
+                { text: '你怎么这么闲', min: 0 },
+                { text: '没有人陪你吗', min: 0 },
+                { text: '你在期待什么', min: 0 },
+                { text: '要不出去走走？', min: 0 },
+                { text: '手机不好玩吗', min: 0 },
+                { text: '点这个有什么意义呢', min: 0 },
+                { text: '你的时间真的很多', min: 0 },
+                { text: '外面天气怎么样？', min: 0 },
+                { text: '你已经点了这么多次了……', min: 20 },
+                { text: '你该不会真的在数吧？', min: 30 },
+                { text: '要不我帮你点？', min: 40 },
+                { text: '说实话，有点可怜', min: 50 },
+                { text: '你的人生就这？', min: 60 },
+                { text: '今天有什么有意义的事吗？', min: 70 },
+                { text: '你爸妈知道你在干嘛吗', min: 80 },
+                { text: '空虚吗？', min: 90 },
+                { text: '你是有多无聊啊', min: 100 },
+                { text: '停下来吧，求你了', min: 150 },
+                { text: '这个人已经点了 150 次了', min: 150 },
+                { text: '你是不是在等什么奇迹', min: 200 },
+                { text: '奇迹不会发生的', min: 220 },
+                { text: '你的人生也是这样徒劳吗', min: 250 },
+                { text: '我已经开始替你觉得尴尬了', min: 280 },
+                { text: '再点下去我要报警了', min: 300 },
+                { text: '300次！你认真的？？', min: 300 },
+                { text: '你赢了，你比我还无聊', min: 350 },
+                { text: '我服了，真的服了', min: 400 },
+                { text: '建议你把这个数字截图发朋友圈', min: 450 },
+                { text: '会不会有一天你点到一个亿', min: 500 },
+                { text: '我要下班了，你自己慢慢点吧', min: 600 },
+                { text: '💀 你的人生成就：点击计数器 1000 次', min: 1000 },
+                { text: '这个页面比你的人际关系还空虚', min: 2000 },
+                { text: '2000次！你是机器人吧？？', min: 2000 },
+                { text: '😭 求求你了，去找点别的事做', min: 3000 },
+                { text: '我承认……你赢了世界', min: 5000 },
+                { text: '你用什么设备点的？手不酸吗', min: 7777 },
+                { text: '🎉 恭喜你！你是全宇宙最无聊的人', min: 10000 },
+            ];
+
+            function getTauntForCount(c) {
+                const eligible = taunts.filter(t => c >= t.min);
+                if (eligible.length === 0) return null;
+                let pick;
+                if (eligible.length > 1) {
+                    do {
+                        pick = eligible[Math.floor(Math.random() * eligible.length)];
+                    } while (eligible.length > 1 && pick === taunts[lastTauntIndex]);
+                } else {
+                    pick = eligible[0];
+                }
+                lastTauntIndex = taunts.indexOf(pick);
+                return pick;
+            }
+
+            try {
+                const saved = localStorage.getItem('clickCount');
+                if (saved !== null) {
+                    count = parseInt(saved, 10);
+                    if (isNaN(count) || count < 0) count = 0;
+                }
+            } catch(e) {}
+
+            function updateDisplay() {
+                display.textContent = count;
+                const intensity = Math.min(1, count / 5000);
+                const r = Math.floor(100 + 155 * intensity);
+                const g = Math.floor(100 + 100 * (1 - intensity * 0.5));
+                const b = 255;
+                display.style.color = `rgb(${r}, ${g}, ${b})`;
+                display.style.textShadow = `0 0 ${20 + 80 * intensity}px rgba(${r}, ${g}, ${b}, ${0.1 + 0.3 * intensity})`;
+            }
+
+            function showTaunt() {
+                const taunt = getTauntForCount(count);
+                if (!taunt) return;
+                tauntEl.textContent = taunt.text;
+                tauntEl.className = 'taunt-text show';
+                if (count >= 100) {
+                    tauntEl.classList.add('zha-xin');
+                }
+                const unlocked = taunts.filter(t => count >= t.min).length;
+                tauntCountEl.textContent = `📜 已解锁 ${unlocked}/${taunts.length} 条语录`;
+            }
+
+            function saveCount() {
+                try {
+                    localStorage.setItem('clickCount', count.toString());
+                } catch(e) {}
+            }
+
+            document.addEventListener('click', function(e) {
+                if (e.target === resetBtn) return;
+                count++;
+                updateDisplay();
+                showTaunt();
+                saveCount();
+                if (navigator.vibrate) {
+                    navigator.vibrate(5);
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    count++;
+                    updateDisplay();
+                    showTaunt();
+                    saveCount();
+                }
+            });
+
+            resetBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (count === 0) return;
+                if (confirm(`你已经点了 ${count} 次，确定要重新做人吗？`)) {
+                    count = 0;
+                    updateDisplay();
+                    tauntEl.className = 'taunt-text';
+                    tauntEl.textContent = '';
+                    tauntCountEl.textContent = '';
+                    saveCount();
+                }
+            });
+
+            updateDisplay();
+            if (count > 0) {
+                showTaunt();
+            }
+
+            console.log('👆 嘲讽计数器已启动！当前数字：' + count);
+            console.log('💡 你每点一次，都会收到一句温暖的问候～');
+        })();
+    </script>
+</body>
+</html>
